@@ -66,8 +66,9 @@ FlutterApplication::FlutterApplication() {
       &FlutterApplication::PresentSurface;
 
 // TODO: Pipe this in through command line args.
-#define MY_PROJECT \
-  "/home/buzzy/VersionControlled/flutter/examples/flutter_gallery"
+#define MY_PROJECT                                                          \
+  "/usr/local/google/home/chinmaygarde/VersionControlled/flutter/examples/" \
+  "flutter_gallery/build/flutter_assets"
 
   std::vector<const char*> engine_command_line_args = {
       "--disable-observatory",    //

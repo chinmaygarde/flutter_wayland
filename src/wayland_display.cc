@@ -126,7 +126,7 @@ bool WaylandDisplay::Run() {
     return false;
   }
 
-  abort();
+  FLWAY_WIP;
 
   return true;
 }
@@ -215,8 +215,12 @@ bool WaylandDisplay::SetupEGL() {
     return false;
   }
 
-  EGLint attributes[] = {
-      // clang-format off
+  EGLConfig egl_config = nullptr;
+
+  // Choose an EGL config to use for the surface and context.
+  {
+    EGLint attribs[] = {
+        // clang-format off
       EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
       EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
       EGL_RED_SIZE,        8,
@@ -226,36 +230,53 @@ bool WaylandDisplay::SetupEGL() {
       EGL_DEPTH_SIZE,      0,
       EGL_STENCIL_SIZE,    0,
       EGL_NONE,            // termination sentinel
-      // clang-format on
-  };
+        // clang-format on
+    };
 
-  EGLint config_count = 0;
-  EGLConfig egl_config = nullptr;
+    EGLint config_count = 0;
 
-  if (eglChooseConfig(egl_display_, attributes, &egl_config, 1,
-                      &config_count) != EGL_TRUE) {
-    LogLastEGLError();
-    FLWAY_ERROR << "Error when attempting to choose an EGL surface config."
-                << std::endl;
-    return false;
+    if (eglChooseConfig(egl_display_, attribs, &egl_config, 1, &config_count) !=
+        EGL_TRUE) {
+      LogLastEGLError();
+      FLWAY_ERROR << "Error when attempting to choose an EGL surface config."
+                  << std::endl;
+      return false;
+    }
+
+    if (config_count == 0 || egl_config == nullptr) {
+      LogLastEGLError();
+      FLWAY_ERROR << "No matching configs." << std::endl;
+      return false;
+    }
   }
 
-  if (config_count == 0 || egl_config == nullptr) {
-    LogLastEGLError();
-    FLWAY_ERROR << "No matching configs." << std::endl;
-    return false;
+  // Create an EGL window surface with the matched config.
+  {
+    const EGLint attribs[] = {EGL_NONE};
+
+    egl_surface_ =
+        eglCreateWindowSurface(egl_display_, egl_config, window_, attribs);
+
+    if (surface_ == EGL_NO_SURFACE) {
+      LogLastEGLError();
+      FLWAY_ERROR << "EGL surface was null during surface selection."
+                  << std::endl;
+      return false;
+    }
   }
 
-  const EGLint attribs[] = {EGL_NONE};
+  // Create an EGL context with the match config.
+  {
+    const EGLint attribs[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
 
-  egl_surface_ =
-      eglCreateWindowSurface(egl_display_, egl_config, window_, attribs);
+    egl_context_ = eglCreateContext(egl_display_, egl_config,
+                                    nullptr /* share group */, attribs);
 
-  if (surface_ == EGL_NO_SURFACE) {
-    LogLastEGLError();
-    FLWAY_ERROR << "EGL surface was null during surface selection."
-                << std::endl;
-    return false;
+    if (egl_context_ == EGL_NO_CONTEXT) {
+      LogLastEGLError();
+      FLWAY_ERROR << "Could not create an onscreen context." << std::endl;
+      return false;
+    }
   }
 
   return true;

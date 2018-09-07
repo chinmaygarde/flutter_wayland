@@ -43,6 +43,7 @@ class WaylandDisplay {
   wl_egl_window* window_ = nullptr;
   EGLDisplay egl_display_ = EGL_NO_DISPLAY;
   EGLSurface egl_surface_ = nullptr;
+  EGLContext egl_context_ = EGL_NO_CONTEXT;
 
   bool SetupEGL();
 
