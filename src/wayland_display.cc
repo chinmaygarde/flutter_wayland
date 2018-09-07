@@ -9,6 +9,7 @@
 #include "wayland_display.h"
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <cstring>
 
@@ -110,7 +111,9 @@ bool WaylandDisplay::Run() {
     return false;
   }
 
-  FLWAY_WIP;
+  while (valid_) {
+    wl_display_dispatch(display_);
+  }
 
   return true;
 }
@@ -325,7 +328,7 @@ bool WaylandDisplay::OnApplicationPresent() {
     return false;
   }
 
-  if (eglSwapBuffers(egl_display_, surface_) != EGL_TRUE) {
+  if (eglSwapBuffers(egl_display_, egl_surface_) != EGL_TRUE) {
     LogLastEGLError();
     FLWAY_ERROR << "Could not swap the EGL buffer." << std::endl;
     return false;

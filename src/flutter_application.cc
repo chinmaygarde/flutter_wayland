@@ -4,6 +4,7 @@
 
 #include "flutter_application.h"
 
+#include <EGL/egl.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -80,6 +81,15 @@ FlutterApplication::FlutterApplication(
   config.open_gl.fbo_callback = [](void* userdata) -> uint32_t {
     return reinterpret_cast<FlutterApplication*>(userdata)
         ->render_delegate_.OnApplicationGetOnscreenFBO();
+  };
+  config.open_gl.gl_proc_resolver = [](void* userdata,
+                                       const char* name) -> void* {
+    auto address = eglGetProcAddress(name);
+    if (address != nullptr) {
+      return reinterpret_cast<void*>(address);
+    }
+    FLWAY_ERROR << "Tried unsuccessfully to resolve: " << name << std::endl;
+    return nullptr;
   };
 
 // TODO: Pipe this in through command line args.
