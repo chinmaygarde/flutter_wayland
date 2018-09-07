@@ -16,12 +16,9 @@
 
 namespace flutter {
 
-class WaylandDisplay {
+class WaylandDisplay : public FlutterApplication::RenderDelegate {
  public:
-  WaylandDisplay(std::unique_ptr<FlutterApplication> application,
-                 std::string name,
-                 size_t width,
-                 size_t height);
+  WaylandDisplay(size_t width, size_t height);
 
   ~WaylandDisplay();
 
@@ -32,8 +29,6 @@ class WaylandDisplay {
  private:
   static const wl_registry_listener kRegistryListener;
   bool valid_ = false;
-  std::unique_ptr<FlutterApplication> application_;
-  std::string screen_name_;
   const int screen_width_;
   const int screen_height_;
   wl_display* display_ = nullptr;
@@ -56,6 +51,18 @@ class WaylandDisplay {
                                    uint32_t name);
 
   bool StopRunning();
+
+  // |flutter::FlutterApplication::RenderDelegate|
+  bool OnApplicationContextMakeCurrent() override;
+
+  // |flutter::FlutterApplication::RenderDelegate|
+  bool OnApplicationContextClearCurrent() override;
+
+  // |flutter::FlutterApplication::RenderDelegate|
+  bool OnApplicationPresent() override;
+
+  // |flutter::FlutterApplication::RenderDelegate|
+  uint32_t OnApplicationGetOnscreenFBO() override;
 
   FLWAY_DISALLOW_COPY_AND_ASSIGN(WaylandDisplay);
 };

@@ -58,22 +58,34 @@ static std::string GetICUDataPath() {
   return icu_path;
 }
 
-FlutterApplication::FlutterApplication() {
+FlutterApplication::FlutterApplication(
+    const std::vector<std::string>& command_line_args,
+    RenderDelegate& render_delegate)
+    : render_delegate_(render_delegate) {
   FlutterRendererConfig config = {};
-  config.type = kSoftware;
-  config.software.struct_size = sizeof(FlutterSoftwareRendererConfig);
-  config.software.surface_present_callback =
-      &FlutterApplication::PresentSurface;
+  config.type = kOpenGL;
+  config.open_gl.struct_size = sizeof(config.open_gl);
+  config.open_gl.make_current = [](void* userdata) -> bool {
+    return reinterpret_cast<FlutterApplication*>(userdata)
+        ->render_delegate_.OnApplicationContextMakeCurrent();
+  };
+  config.open_gl.clear_current = [](void* userdata) -> bool {
+    return reinterpret_cast<FlutterApplication*>(userdata)
+        ->render_delegate_.OnApplicationContextClearCurrent();
+  };
+  config.open_gl.present = [](void* userdata) -> bool {
+    return reinterpret_cast<FlutterApplication*>(userdata)
+        ->render_delegate_.OnApplicationPresent();
+  };
+  config.open_gl.fbo_callback = [](void* userdata) -> uint32_t {
+    return reinterpret_cast<FlutterApplication*>(userdata)
+        ->render_delegate_.OnApplicationGetOnscreenFBO();
+  };
 
 // TODO: Pipe this in through command line args.
 #define MY_PROJECT                                                          \
   "/usr/local/google/home/chinmaygarde/VersionControlled/flutter/examples/" \
   "flutter_gallery/build/flutter_assets"
-
-  std::vector<const char*> engine_command_line_args = {
-      "--disable-observatory",    //
-      "--dart-non-checked-mode",  //
-  };
 
   auto icu_data_path = GetICUDataPath();
 
@@ -84,19 +96,25 @@ FlutterApplication::FlutterApplication() {
     return;
   }
 
+  std::vector<const char*> command_line_args_c;
+
+  for (const auto& arg : command_line_args) {
+    command_line_args_c.push_back(arg.c_str());
+  }
+
   FlutterProjectArgs args = {
       .struct_size = sizeof(FlutterProjectArgs),
-      .assets_path = MY_PROJECT "/build/flutter_assets",
+      .assets_path = MY_PROJECT,
       .main_path = "",
       .packages_path = "",
       .icu_data_path = icu_data_path.c_str(),
-      .command_line_argc = static_cast<int>(engine_command_line_args.size()),
-      .command_line_argv = engine_command_line_args.data(),
+      .command_line_argc = static_cast<int>(command_line_args_c.size()),
+      .command_line_argv = command_line_args_c.data(),
   };
 
   FlutterEngine engine = nullptr;
-  auto result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config,  // renderer
-                                 &args, this, &engine_);
+  auto result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, &args,
+                                 this /* userdata */, &engine_);
 
   if (result != kSuccess) {
     FLWAY_ERROR << "Could not run the Flutter engine" << std::endl;
@@ -133,31 +151,6 @@ bool FlutterApplication::SetWindowSize(size_t width, size_t height) {
 
 void FlutterApplication::ProcessEvents() {
   __FlutterEngineFlushPendingTasksNow();
-}
-
-bool FlutterApplication::PresentSurface(void* user_data,
-                                        const void* allocation,
-                                        size_t row_bytes,
-                                        size_t height) {
-  return reinterpret_cast<FlutterApplication*>(user_data)->PresentSurface(
-      allocation, row_bytes, height);
-}
-
-void FlutterApplication::SetOnPresentCallback(PresentCallback callback) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  present_callback_ = callback;
-}
-
-bool FlutterApplication::PresentSurface(const void* allocation,
-                                        size_t row_bytes,
-                                        size_t height) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  if (!present_callback_) {
-    FLWAY_ERROR << "Present callback was not set." << std::endl;
-    return false;
-  }
-  present_callback_(allocation, row_bytes, height);
-  return true;
 }
 
 bool FlutterApplication::SendPointerEvent(int button, int x, int y) {

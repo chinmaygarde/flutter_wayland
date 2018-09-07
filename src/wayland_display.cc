@@ -30,19 +30,8 @@ const wl_registry_listener WaylandDisplay::kRegistryListener = {
     },
 };
 
-WaylandDisplay::WaylandDisplay(std::unique_ptr<FlutterApplication> application,
-                               std::string name,
-                               size_t width,
-                               size_t height)
-    : application_(std::move(application)),
-      screen_name_(std::move(name)),
-      screen_width_(width),
-      screen_height_(height) {
-  if (!application_ || !application_->IsValid()) {
-    FLWAY_ERROR << "Invalid application to run." << std::endl;
-    return;
-  }
-
+WaylandDisplay::WaylandDisplay(size_t width, size_t height)
+    : screen_width_(width), screen_height_(height) {
   if (screen_width_ == 0 || screen_height_ == 0) {
     FLWAY_ERROR << "Invalid screen dimensions." << std::endl;
     return;
@@ -67,11 +56,6 @@ WaylandDisplay::WaylandDisplay(std::unique_ptr<FlutterApplication> application,
 
   if (!SetupEGL()) {
     FLWAY_ERROR << "Could not setup EGL." << std::endl;
-    return;
-  }
-
-  if (!application_->SetWindowSize(width, height)) {
-    FLWAY_ERROR << "Could not set the application window size." << std::endl;
     return;
   }
 
@@ -299,5 +283,65 @@ void WaylandDisplay::AnnounceRegistryInterface(struct wl_registry* wl_registry,
 void WaylandDisplay::UnannounceRegistryInterface(
     struct wl_registry* wl_registry,
     uint32_t name) {}
+
+// |flutter::FlutterApplication::RenderDelegate|
+bool WaylandDisplay::OnApplicationContextMakeCurrent() {
+  if (!valid_) {
+    FLWAY_ERROR << "Invalid display." << std::endl;
+    return false;
+  }
+
+  if (eglMakeCurrent(egl_display_, egl_surface_, egl_surface_, egl_context_) !=
+      EGL_TRUE) {
+    LogLastEGLError();
+    FLWAY_ERROR << "Could not make the onscreen context current" << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+// |flutter::FlutterApplication::RenderDelegate|
+bool WaylandDisplay::OnApplicationContextClearCurrent() {
+  if (!valid_) {
+    FLWAY_ERROR << "Invalid display." << std::endl;
+    return false;
+  }
+
+  if (eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                     EGL_NO_CONTEXT) != EGL_TRUE) {
+    LogLastEGLError();
+    FLWAY_ERROR << "Could not clear the context." << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+// |flutter::FlutterApplication::RenderDelegate|
+bool WaylandDisplay::OnApplicationPresent() {
+  if (!valid_) {
+    FLWAY_ERROR << "Invalid display." << std::endl;
+    return false;
+  }
+
+  if (eglSwapBuffers(egl_display_, surface_) != EGL_TRUE) {
+    LogLastEGLError();
+    FLWAY_ERROR << "Could not swap the EGL buffer." << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+// |flutter::FlutterApplication::RenderDelegate|
+uint32_t WaylandDisplay::OnApplicationGetOnscreenFBO() {
+  if (!valid_) {
+    FLWAY_ERROR << "Invalid display." << std::endl;
+    return 999;
+  }
+
+  return 0;  // FBO0
+}
 
 }  // namespace flutter

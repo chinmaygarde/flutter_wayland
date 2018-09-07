@@ -4,27 +4,47 @@
 
 #include <stdlib.h>
 
+#include <string>
+#include <vector>
+
 #include "flutter_application.h"
 #include "wayland_display.h"
 
-int main(int argc, char* argv[]) {
-  auto application = std::make_unique<flutter::FlutterApplication>();
+namespace flutter {
 
-  if (!application->IsValid()) {
-    FLWAY_ERROR << "Could not run the Flutter application." << std::endl;
-    return EXIT_FAILURE;
-  }
+bool Main(std::vector<std::string> args) {
+  const size_t kWidth = 800;
+  const size_t kHeight = 600;
 
-  flutter::WaylandDisplay display(std::move(application),  //
-                                  "Flutter Gallery",       //
-                                  800, 600);
+  WaylandDisplay display(kWidth, kHeight);
 
   if (!display.IsValid()) {
-    FLWAY_ERROR << "Could not create the wayland display." << std::endl;
-    return EXIT_FAILURE;
+    FLWAY_ERROR << "Wayland display was not valid." << std::endl;
+    return false;
+  }
+
+  FlutterApplication application(args, display);
+  if (!application.IsValid()) {
+    FLWAY_ERROR << "Flutter application was not valid." << std::endl;
+    return false;
+  }
+
+  if (!application.SetWindowSize(kWidth, kHeight)) {
+    FLWAY_ERROR << "Could not update Flutter application size." << std::endl;
+    return false;
   }
 
   display.Run();
 
-  return EXIT_SUCCESS;
+  return true;
+}
+
+}  // namespace flutter
+
+int main(int argc, char* argv[]) {
+  std::vector<std::string> args;
+  for (int i = 0; i < argc; ++i) {
+    args.push_back(argv[i]);
+  }
+  return flutter::Main(std::move(args)) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
