@@ -26,7 +26,8 @@ class FlutterApplication {
     virtual uint32_t OnApplicationGetOnscreenFBO() = 0;
   };
 
-  FlutterApplication(const std::vector<std::string>& args,
+  FlutterApplication(std::string bundle_path,
+                     const std::vector<std::string>& args,
                      RenderDelegate& render_delegate);
 
   ~FlutterApplication();

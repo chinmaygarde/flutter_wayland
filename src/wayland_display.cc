@@ -144,7 +144,6 @@ bool WaylandDisplay::Run() {
   }
 
   while (valid_) {
-    FLWAY_LOG << "Dispatching." << std::endl;
     wl_display_dispatch(display_);
   }
 
@@ -330,8 +329,6 @@ void WaylandDisplay::AnnounceRegistryInterface(struct wl_registry* wl_registry,
         wl_registry_bind(wl_registry, name, &wl_shell_interface, 1));
     return;
   }
-
-  FLWAY_LOG << "Unhandled Announce of: " << interface_name << std::endl;
 }
 
 void WaylandDisplay::UnannounceRegistryInterface(
