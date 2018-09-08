@@ -3,6 +3,8 @@ Flutter Wayland
 
 A Flutter Embedder that talks to Wayland.
 
+![Running in Weston](assets/image.png)
+
 Build Setup Instructions
 ------------------------
 
