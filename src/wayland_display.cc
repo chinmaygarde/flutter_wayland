@@ -15,19 +15,41 @@
 
 namespace flutter {
 
+#define DISPLAY reinterpret_cast<WaylandDisplay*>(data)
+
 const wl_registry_listener WaylandDisplay::kRegistryListener = {
     .global = [](void* data,
                  struct wl_registry* wl_registry,
                  uint32_t name,
                  const char* interface,
                  uint32_t version) -> void {
-      reinterpret_cast<WaylandDisplay*>(data)->AnnounceRegistryInterface(
-          wl_registry, name, interface, version);
+      DISPLAY->AnnounceRegistryInterface(wl_registry, name, interface, version);
     },
+
     .global_remove =
         [](void* data, struct wl_registry* wl_registry, uint32_t name) -> void {
-      reinterpret_cast<WaylandDisplay*>(data)->UnannounceRegistryInterface(
-          wl_registry, name);
+      DISPLAY->UnannounceRegistryInterface(wl_registry, name);
+    },
+};
+
+const wl_shell_surface_listener WaylandDisplay::kShellSurfaceListener = {
+    .ping = [](void* data,
+               struct wl_shell_surface* wl_shell_surface,
+               uint32_t serial) -> void {
+      wl_shell_surface_pong(DISPLAY->shell_surface_, serial);
+    },
+
+    .configure = [](void* data,
+                    struct wl_shell_surface* wl_shell_surface,
+                    uint32_t edges,
+                    int32_t width,
+                    int32_t height) -> void {
+      FLWAY_ERROR << "Unhandled resize." << std::endl;
+    },
+
+    .popup_done = [](void* data,
+                     struct wl_shell_surface* wl_shell_surface) -> void {
+      // Nothing to do.
     },
 };
 
@@ -64,6 +86,16 @@ WaylandDisplay::WaylandDisplay(size_t width, size_t height)
 }
 
 WaylandDisplay::~WaylandDisplay() {
+  if (shell_surface_) {
+    wl_shell_surface_destroy(shell_surface_);
+    shell_surface_ = nullptr;
+  }
+
+  if (shell_) {
+    wl_shell_destroy(shell_);
+    shell_ = nullptr;
+  }
+
   if (egl_surface_) {
     eglDestroySurface(egl_display_, egl_surface_);
     egl_surface_ = nullptr;
@@ -112,6 +144,7 @@ bool WaylandDisplay::Run() {
   }
 
   while (valid_) {
+    FLWAY_LOG << "Dispatching." << std::endl;
     wl_display_dispatch(display_);
   }
 
@@ -163,8 +196,8 @@ static void LogLastEGLError() {
 }
 
 bool WaylandDisplay::SetupEGL() {
-  if (!compositor_) {
-    FLWAY_ERROR << "EGL setup needs missing compositor connection."
+  if (!compositor_ || !shell_) {
+    FLWAY_ERROR << "EGL setup needs missing compositor and shell connection."
                 << std::endl;
     return false;
   }
@@ -175,6 +208,19 @@ bool WaylandDisplay::SetupEGL() {
     FLWAY_ERROR << "Could not create compositor surface." << std::endl;
     return false;
   }
+
+  shell_surface_ = wl_shell_get_shell_surface(shell_, surface_);
+
+  if (!shell_surface_) {
+    FLWAY_ERROR << "Could not shell surface." << std::endl;
+    return false;
+  }
+
+  wl_shell_surface_add_listener(shell_surface_, &kShellSurfaceListener, this);
+
+  wl_shell_surface_set_title(shell_surface_, "Flutter");
+
+  wl_shell_surface_set_toplevel(shell_surface_);
 
   window_ = wl_egl_window_create(surface_, screen_width_, screen_height_);
 
@@ -274,9 +320,14 @@ void WaylandDisplay::AnnounceRegistryInterface(struct wl_registry* wl_registry,
                                                const char* interface_name,
                                                uint32_t version) {
   if (strcmp(interface_name, "wl_compositor") == 0) {
-    const struct wl_interface* interface = &wl_compositor_interface;
     compositor_ = static_cast<decltype(compositor_)>(
-        wl_registry_bind(wl_registry, name, interface, version));
+        wl_registry_bind(wl_registry, name, &wl_compositor_interface, 1));
+    return;
+  }
+
+  if (strcmp(interface_name, "wl_shell") == 0) {
+    shell_ = static_cast<decltype(shell_)>(
+        wl_registry_bind(wl_registry, name, &wl_shell_interface, 1));
     return;
   }
 
