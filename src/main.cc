@@ -40,6 +40,40 @@ asset_bundle_path: The Flutter application code needs to be snapshotted using
 )~" << std::endl;
 }
 
+static FlutterApplication* application;
+
+class InputEventListener : public WaylandDisplay::InputDelegate {
+  private:
+    uint32_t x = 0;
+    uint32_t y = 0;
+    uint32_t status = 0;
+
+    void OnDisplayPointerEnter(uint32_t x, uint32_t y) {
+      this->x = x;
+      this->y = y;
+    }
+
+    void OnDisplayPointerLeave() {
+      this->x = 0;
+      this->y = 0;
+    }
+
+    void OnDisplayPointerMotion(uint32_t x, uint32_t y) {
+      this->x = x;
+      this->y = y;
+      application->SendPointerEvent(this->status, this->x, this->y);
+    }
+
+    void OnDisplayPointerButton(uint32_t button, uint32_t status) {
+      this->status = status;
+      application->SendPointerEvent(this->status, this->x, this->y);
+    }
+
+    void OnDisplayPointerAxis(uint32_t axis, uint32_t value) {
+      // Nothing to do.
+    }
+};
+
 static bool Main(std::vector<std::string> args) {
   if (args.size() == 0) {
     std::cerr << "   <Invalid Arguments>   " << std::endl;
@@ -62,25 +96,28 @@ static bool Main(std::vector<std::string> args) {
     FLWAY_LOG << "Arg: " << arg << std::endl;
   }
 
-  WaylandDisplay display(kWidth, kHeight);
+  InputEventListener inputEventListener;
+  WaylandDisplay display(kWidth, kHeight, inputEventListener);
 
   if (!display.IsValid()) {
     FLWAY_ERROR << "Wayland display was not valid." << std::endl;
     return false;
   }
 
-  FlutterApplication application(asset_bundle_path, args, display);
-  if (!application.IsValid()) {
+  application = new FlutterApplication(asset_bundle_path, args, display);
+  if (!application->IsValid()) {
     FLWAY_ERROR << "Flutter application was not valid." << std::endl;
     return false;
   }
 
-  if (!application.SetWindowSize(kWidth, kHeight)) {
+  if (!application->SetWindowSize(kWidth, kHeight)) {
     FLWAY_ERROR << "Could not update Flutter application size." << std::endl;
     return false;
   }
 
   display.Run();
+
+  delete application;
 
   return true;
 }

@@ -18,7 +18,20 @@ namespace flutter {
 
 class WaylandDisplay : public FlutterApplication::RenderDelegate {
  public:
-  WaylandDisplay(size_t width, size_t height);
+  class InputDelegate {
+   public:
+    virtual void OnDisplayPointerEnter(uint32_t x, uint32_t y) = 0;
+
+    virtual void OnDisplayPointerLeave() = 0;
+
+    virtual void OnDisplayPointerMotion(uint32_t x, uint32_t y) = 0;
+
+    virtual void OnDisplayPointerButton(uint32_t button, uint32_t status) = 0;
+
+    virtual void OnDisplayPointerAxis(uint32_t axis, uint32_t value) = 0;
+  };
+
+  WaylandDisplay(size_t width, size_t height, InputDelegate& input_delegate);
 
   ~WaylandDisplay();
 
@@ -29,6 +42,10 @@ class WaylandDisplay : public FlutterApplication::RenderDelegate {
  private:
   static const wl_registry_listener kRegistryListener;
   static const wl_shell_surface_listener kShellSurfaceListener;
+  static const wl_seat_listener kSeatListener;
+  static const wl_pointer_listener kPointerListener;
+
+  InputDelegate& input_delegate_;
   bool valid_ = false;
   const int screen_width_;
   const int screen_height_;
@@ -36,6 +53,8 @@ class WaylandDisplay : public FlutterApplication::RenderDelegate {
   wl_registry* registry_ = nullptr;
   wl_compositor* compositor_ = nullptr;
   wl_shell* shell_ = nullptr;
+  wl_seat* seat_ = nullptr;
+  wl_pointer* pointer_ = nullptr;
   wl_shell_surface* shell_surface_ = nullptr;
   wl_surface* surface_ = nullptr;
   wl_egl_window* window_ = nullptr;

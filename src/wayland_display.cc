@@ -53,8 +53,69 @@ const wl_shell_surface_listener WaylandDisplay::kShellSurfaceListener = {
     },
 };
 
-WaylandDisplay::WaylandDisplay(size_t width, size_t height)
-    : screen_width_(width), screen_height_(height) {
+const wl_seat_listener WaylandDisplay::kSeatListener = {
+  .capabilities = [](void* data,
+                     wl_seat* seat,
+                     uint32_t caps) -> void {
+                      if (caps & WL_SEAT_CAPABILITY_POINTER) {
+                        DISPLAY->pointer_ = wl_seat_get_pointer(seat);
+                        wl_pointer_add_listener(DISPLAY->pointer_, &kPointerListener, DISPLAY);
+                      }
+                      if (!(caps & WL_SEAT_CAPABILITY_POINTER)) {
+                        wl_pointer_destroy(DISPLAY->pointer_);
+                        DISPLAY->pointer_ = nullptr;
+                      }
+                    },
+};
+
+const wl_pointer_listener WaylandDisplay::kPointerListener = {
+  .enter = [](void *data,
+              struct wl_pointer *wl_pointer,
+              uint32_t serial,
+              struct wl_surface *surface,
+              wl_fixed_t surface_x, wl_fixed_t surface_y) -> void {
+                double x = wl_fixed_to_double(surface_x);
+                double y = wl_fixed_to_double(surface_y);
+                DISPLAY->input_delegate_.OnDisplayPointerEnter(x, y);
+              },
+
+  .leave = [](void* data,
+              wl_pointer* pointer,
+              uint32_t setrial,
+              wl_surface* surface) -> void {
+                DISPLAY->input_delegate_.OnDisplayPointerLeave();
+              },
+
+  .motion = [](void* data,
+               wl_pointer* pointer,
+               uint32_t time,
+               wl_fixed_t surface_x, wl_fixed_t surface_y ) -> void {
+                 double x = wl_fixed_to_double(surface_x);
+                 double y = wl_fixed_to_double(surface_y);
+                 DISPLAY->input_delegate_.OnDisplayPointerMotion(x, y);
+               },
+
+  .button = [](void* data,
+               wl_pointer* pointer,
+               uint32_t serial,
+               uint32_t time,
+               uint32_t button,
+               uint32_t status) -> void {
+                 DISPLAY->input_delegate_.OnDisplayPointerButton(button, status);
+               },
+
+  .axis = [](void *data,
+             struct wl_pointer *wl_pointer,
+             uint32_t time,
+             uint32_t axis,
+             wl_fixed_t value) -> void {
+               double val = wl_fixed_to_double(value);
+               DISPLAY->input_delegate_.OnDisplayPointerAxis(axis, value);
+             },
+};
+
+WaylandDisplay::WaylandDisplay(size_t width, size_t height, InputDelegate& input_delegate)
+    : screen_width_(width), screen_height_(height), input_delegate_(input_delegate) {
   if (screen_width_ == 0 || screen_height_ == 0) {
     FLWAY_ERROR << "Invalid screen dimensions." << std::endl;
     return;
@@ -328,6 +389,12 @@ void WaylandDisplay::AnnounceRegistryInterface(struct wl_registry* wl_registry,
     shell_ = static_cast<decltype(shell_)>(
         wl_registry_bind(wl_registry, name, &wl_shell_interface, 1));
     return;
+  }
+
+  if (strcmp(interface_name, "wl_seat") == 0) {
+    seat_ = static_cast<decltype(seat_)>(
+      wl_registry_bind(wl_registry, name, &wl_seat_interface, 1));
+    wl_seat_add_listener(seat_, &kSeatListener, this);
   }
 }
 
