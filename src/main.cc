@@ -59,7 +59,7 @@ static bool Main(std::vector<std::string> args) {
   const size_t kHeight = 600;
 
   for (const auto& arg : args) {
-    FLWAY_ERROR << "Arg: " << arg << std::endl;
+    FLWAY_LOG << "Arg: " << arg << std::endl;
   }
 
   WaylandDisplay display(kWidth, kHeight);
