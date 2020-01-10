@@ -157,6 +157,11 @@ WaylandDisplay::~WaylandDisplay() {
     shell_ = nullptr;
   }
 
+  if (seat_) {
+    wl_seat_destroy(seat_);
+    seat_ = nullptr;
+  }
+
   if (egl_surface_) {
     eglDestroySurface(egl_display_, egl_surface_);
     egl_surface_ = nullptr;
