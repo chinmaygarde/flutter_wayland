@@ -94,8 +94,8 @@ FlutterApplication::FlutterApplication(
   FlutterProjectArgs args = {
       .struct_size = sizeof(FlutterProjectArgs),
       .assets_path = bundle_path.c_str(),
-      .main_path__unused__ = "",
-      .packages_path__unused__ = "",
+      .main_path__unused__ = nullptr,
+      .packages_path__unused__ = nullptr,
       .icu_data_path = icu_data_path.c_str(),
       .command_line_argc = static_cast<int>(command_line_args_c.size()),
       .command_line_argv = command_line_args_c.data(),
