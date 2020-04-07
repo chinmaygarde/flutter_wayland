@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "flutter_application.h"
 #include "utils.h"
 #include "wayland_display.h"
 
@@ -55,27 +54,27 @@ static bool Main(std::vector<std::string> args) {
     return false;
   }
 
-  const size_t kWidth = 800;
-  const size_t kHeight = 600;
+  const size_t kWidth = 640;
+  const size_t kHeight = 480;
 
   for (const auto& arg : args) {
-    FLWAY_ERROR << "Arg: " << arg << std::endl;
+    FLWAY_LOG << "Arg: " << arg << std::endl;
   }
 
-  WaylandDisplay display(kWidth, kHeight);
+  WaylandDisplay display(kWidth, kHeight, asset_bundle_path, args);
 
   if (!display.IsValid()) {
     FLWAY_ERROR << "Wayland display was not valid." << std::endl;
     return false;
   }
 
-  FlutterApplication application(asset_bundle_path, args, display);
-  if (!application.IsValid()) {
+  display.InitializeApplication(asset_bundle_path, args);
+  if (!display.IsValid()) {
     FLWAY_ERROR << "Flutter application was not valid." << std::endl;
     return false;
   }
 
-  if (!application.SetWindowSize(kWidth, kHeight)) {
+  if (!display.SetWindowSize(kWidth, kHeight)) {
     FLWAY_ERROR << "Could not update Flutter application size." << std::endl;
     return false;
   }
