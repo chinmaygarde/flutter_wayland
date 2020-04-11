@@ -5,21 +5,19 @@
 
 #pragma once
 
+#include <GLES3/gl3.h>
+#include <flutter_embedder.h>
+#include <linux/input.h>
+
 #include <array>
+#include <functional>
 #include <iostream>
+#include <queue>
 #include <stdexcept>
+#include <vector>
 #include <wayland-client-protocol-extra.hpp>
 #include <wayland-client.hpp>
 #include <wayland-egl.hpp>
-
-#include <GLES3/gl3.h>
-
-#include <linux/input.h>
-
-#include <flutter_embedder.h>
-
-#include <functional>
-#include <vector>
 
 #include "macros.h"
 
@@ -87,17 +85,33 @@ class WaylandDisplay {
 
   void init_egl();
 
-  void ProcessEvents();
-
   bool GLMakeCurrent();
   bool GLClearCurrent();
   bool GLPresent();
   uint32_t GLFboCallback();
   bool GLMakeResourceCurrent();
+  bool GLExternalTextureFrameCallback(int64_t texture_id,
+                                      size_t width,
+                                      size_t height,
+                                      FlutterOpenGLTexture* texture);
+
+  class CompareDist {
+   public:
+    bool operator()(std::pair<uint64_t, FlutterTask> n1,
+                    std::pair<uint64_t, FlutterTask> n2) {
+      return n1.first > n2.first;
+    }
+  };
+  std::priority_queue<std::pair<uint64_t, FlutterTask>,
+                      std::vector<std::pair<uint64_t, FlutterTask>>,
+                      CompareDist>
+      TaskRunner;
+
+  void PostTaskCallback(FlutterTask task, uint64_t target_time);
 
   void PlatformMessageCallback(const FlutterPlatformMessage* message);
 
   FLWAY_DISALLOW_COPY_AND_ASSIGN(WaylandDisplay);
-};
+};  // namespace flutter
 
 }  // namespace flutter

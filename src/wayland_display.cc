@@ -4,21 +4,22 @@
 // found in the LICENSE file.
 
 #include "wayland_display.h"
-#include "utils.h"
 
 #include <linux/input-event-codes.h>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <xkbcommon/xkbcommon.h>
+
 #include <chrono>
 #include <sstream>
 #include <thread>
 #include <vector>
 
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include "utils.h"
 
 namespace flutter {
 
@@ -68,7 +69,6 @@ void WaylandDisplay::InitializeApplication(
   config.open_gl.make_resource_current = [](void* context) -> bool {
     return reinterpret_cast<WaylandDisplay*>(context)->GLMakeResourceCurrent();
   };
-
   config.open_gl.gl_proc_resolver = [](void* context,
                                        const char* name) -> void* {
     auto address = eglGetProcAddress(name);
@@ -78,6 +78,14 @@ void WaylandDisplay::InitializeApplication(
     FLWAY_ERROR << "Tried unsuccessfully to resolve: " << name << std::endl;
     return nullptr;
   };
+#if 0  
+  config.open_gl.gl_external_texture_frame_callback =
+      [](void* context, int64_t texture_id, size_t width, size_t height,
+         FlutterOpenGLTexture* texture) -> bool {
+    return reinterpret_cast<WaylandDisplay*>(context)
+        ->GLExternalTextureFrameCallback(texture_id, width, height, texture);
+  };
+#endif
 
   auto icu_data_path = GetICUDataPath();
 
@@ -106,12 +114,34 @@ void WaylandDisplay::InitializeApplication(
         message);
   };
 
-  FlutterEngine engine = nullptr;
-  auto result = FlutterEngineRun(FLUTTER_ENGINE_VERSION, &config, &args,
-                                 this /* userdata */, &engine_);
+  // Configure task runner interop
+  FlutterTaskRunnerDescription platform_task_runner = {};
+  platform_task_runner.struct_size = sizeof(FlutterTaskRunnerDescription);
+  platform_task_runner.user_data = this;
+  platform_task_runner.runs_task_on_current_thread_callback =
+      [](void* context) -> bool { return true; };
+  platform_task_runner.post_task_callback =
+      [](FlutterTask task, uint64_t target_time, void* context) -> void {
+    reinterpret_cast<WaylandDisplay*>(context)->PostTaskCallback(task,
+                                                                 target_time);
+  };
 
+  FlutterCustomTaskRunners custom_task_runners = {};
+  custom_task_runners.struct_size = sizeof(FlutterCustomTaskRunners);
+  custom_task_runners.platform_task_runner = &platform_task_runner;
+  args.custom_task_runners = &custom_task_runners;
+
+  FlutterEngine engine = nullptr;
+  auto result = FlutterEngineInitialize(FLUTTER_ENGINE_VERSION, &config, &args,
+                                        this, &engine_);
   if (result != kSuccess) {
-    FLWAY_ERROR << "Could not run the Flutter engine" << std::endl;
+    FLWAY_ERROR << "Could not Initialize the Flutter engine" << std::endl;
+    return;
+  }
+
+  result = FlutterEngineRunInitialized(engine_);
+  if (result != kSuccess) {
+    FLWAY_ERROR << "Could not run the initialized Flutter engine" << std::endl;
     return;
   }
 
@@ -129,10 +159,6 @@ bool WaylandDisplay::SetWindowSize(size_t width, size_t height) {
   event.height = height;
   event.pixel_ratio = 1.0;
   return FlutterEngineSendWindowMetricsEvent(engine_, &event) == kSuccess;
-}
-
-void WaylandDisplay::ProcessEvents() {
-  __FlutterEngineFlushPendingTasksNow();
 }
 
 WaylandDisplay::WaylandDisplay(size_t width,
@@ -519,6 +545,15 @@ bool WaylandDisplay::Run() {
   // event loop
   while (running && valid_) {
     display.dispatch();
+
+    if (!TaskRunner.empty()) {
+      uint64_t current = FlutterEngineGetCurrentTime();
+      if (current >= TaskRunner.top().first) {
+        auto item = TaskRunner.top();
+        TaskRunner.pop();
+        auto result = FlutterEngineRunTask(engine_, &item.second);
+      }
+    }
   }
 
   return true;
@@ -570,6 +605,18 @@ bool WaylandDisplay::GLMakeResourceCurrent() {
 
   return (eglMakeCurrent(egldisplay, EGL_NO_SURFACE, EGL_NO_SURFACE,
                          eglresourcecontext) == EGL_TRUE);
+}
+
+bool WaylandDisplay::GLExternalTextureFrameCallback(
+    int64_t texture_id,
+    size_t width,
+    size_t height,
+    FlutterOpenGLTexture* texture) {
+  return true;
+}
+
+void WaylandDisplay::PostTaskCallback(FlutterTask task, uint64_t target_time) {
+  TaskRunner.push(std::make_pair(target_time, task));
 }
 
 void WaylandDisplay::PlatformMessageCallback(
