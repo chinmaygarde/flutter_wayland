@@ -52,10 +52,9 @@ pkg_check_modules(RAPIDJSON REQUIRED "RapidJSON>=1.1.0")
 
 
 set(FLUTTER_WAYLAND_SRC
-  src/utils.cc
-  src/utils.h
+  flutter/standard_codec.cc
   src/wayland_display.cc
-  src/wayland_display.h
+  src/utils.cc
   src/main.cc
 )
 
@@ -77,13 +76,14 @@ target_link_libraries(flutter_wayland
 
 target_include_directories(flutter_wayland
   PRIVATE
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_BINARY_DIR}
   ${WAYLANDPP_CLIENT_INCLUDE_DIRS}
   ${WAYLANDPP_CURSOR_INCLUDE_DIRS}
   ${WAYLANDPP_EGL_INCLUDE_DIRS}
   ${WAYLANDPP_CLIENT_EXTRA_INCLUDE_DIRS}
   ${RAPIDJSON_INCLUDE_DIRS}
   ${OPENGL_INCLUDE_DIRS}
-  ${CMAKE_BINARY_DIR}
 )
 
 target_compile_options(flutter_wayland PUBLIC ${EGL_CFLAGS})

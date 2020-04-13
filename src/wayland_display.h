@@ -7,6 +7,7 @@
 
 #include <GLES3/gl3.h>
 #include <flutter_embedder.h>
+#include <flutter/standard_method_codec.h>
 #include <linux/input.h>
 
 #include <array>
@@ -95,7 +96,7 @@ class WaylandDisplay {
                                       size_t height,
                                       FlutterOpenGLTexture* texture);
 
-  class CompareDist {
+  class CompareFlutterTask {
    public:
     bool operator()(std::pair<uint64_t, FlutterTask> n1,
                     std::pair<uint64_t, FlutterTask> n2) {
@@ -104,12 +105,23 @@ class WaylandDisplay {
   };
   std::priority_queue<std::pair<uint64_t, FlutterTask>,
                       std::vector<std::pair<uint64_t, FlutterTask>>,
-                      CompareDist>
+                      CompareFlutterTask>
       TaskRunner;
 
   void PostTaskCallback(FlutterTask task, uint64_t target_time);
 
   void PlatformMessageCallback(const FlutterPlatformMessage* message);
+
+  std::map<std::string, std::function<void(const FlutterPlatformMessage*)>>
+      platform_message_handlers_;
+
+  void OnAccessibilityChannelPlatformMessage(const FlutterPlatformMessage*);
+  void OnFlutterPlatformChannelPlatformMessage(const FlutterPlatformMessage*);
+    void OnFlutterTextInputChannelPlatformMessage(const FlutterPlatformMessage*);
+  void OnFlutterPlatformViewsChannelPlatformMessage(const FlutterPlatformMessage*);
+
+  void OnFlutterPluginIoUrlLauncher(const FlutterPlatformMessage*);
+  void OnFlutterPluginConnectivity(const FlutterPlatformMessage*);
 
   FLWAY_DISALLOW_COPY_AND_ASSIGN(WaylandDisplay);
 };  // namespace flutter
