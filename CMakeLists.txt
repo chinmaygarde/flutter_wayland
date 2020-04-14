@@ -86,3 +86,5 @@ target_include_directories(flutter_wayland
 )
 
 target_compile_options(flutter_wayland PUBLIC ${EGL_CFLAGS})
+
+install(TARGETS flutter_wayland RUNTIME DESTINATION bin)
