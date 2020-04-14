@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 #include <flutter_embedder.h>
 #include <linux/input.h>
 
