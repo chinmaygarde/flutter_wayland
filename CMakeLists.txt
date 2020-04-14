@@ -54,6 +54,8 @@ pkg_check_modules(RAPIDJSON REQUIRED "RapidJSON>=1.1.0")
 set(FLUTTER_WAYLAND_SRC
   flutter/standard_codec.cc
   src/wayland_display.cc
+  src/keyboard.cc
+  src/platform_channel.cc
   src/utils.cc
   src/main.cc
 )

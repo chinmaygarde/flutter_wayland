@@ -7,7 +7,6 @@
 
 #include <GLES3/gl3.h>
 #include <flutter_embedder.h>
-#include <flutter/standard_method_codec.h>
 #include <linux/input.h>
 
 #include <array>
@@ -21,6 +20,8 @@
 #include <wayland-egl.hpp>
 
 #include "macros.h"
+#include "keyboard.h"
+#include "platform_channel.h"
 
 using namespace wayland;
 
@@ -60,7 +61,7 @@ class WaylandDisplay {
   xdg_surface_t xdg_surface;
   xdg_toplevel_t xdg_toplevel;
   pointer_t pointer;
-  keyboard_t keyboard;
+  Keyboard *keyboard;
   touch_t touch;
 
   // EGL
@@ -82,6 +83,7 @@ class WaylandDisplay {
   int32_t cur_y;
 
   FlutterEngine engine_ = nullptr;
+  PlatformChannel platform_channel_;
   int last_button_ = 0;
 
   void init_egl();
@@ -110,18 +112,6 @@ class WaylandDisplay {
 
   void PostTaskCallback(FlutterTask task, uint64_t target_time);
 
-  void PlatformMessageCallback(const FlutterPlatformMessage* message);
-
-  std::map<std::string, std::function<void(const FlutterPlatformMessage*)>>
-      platform_message_handlers_;
-
-  void OnAccessibilityChannelPlatformMessage(const FlutterPlatformMessage*);
-  void OnFlutterPlatformChannelPlatformMessage(const FlutterPlatformMessage*);
-    void OnFlutterTextInputChannelPlatformMessage(const FlutterPlatformMessage*);
-  void OnFlutterPlatformViewsChannelPlatformMessage(const FlutterPlatformMessage*);
-
-  void OnFlutterPluginIoUrlLauncher(const FlutterPlatformMessage*);
-  void OnFlutterPluginConnectivity(const FlutterPlatformMessage*);
 
   FLWAY_DISALLOW_COPY_AND_ASSIGN(WaylandDisplay);
 };  // namespace flutter
