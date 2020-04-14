@@ -45,7 +45,6 @@ pkg_check_modules(WAYLANDPP_CURSOR REQUIRED "wayland-cursor++>=0.2.7")
 pkg_check_modules(WAYLANDPP_EGL REQUIRED "wayland-egl++>=0.2.7")
 pkg_check_modules(WAYLANDPP_CLIENT_EXTRA REQUIRED "wayland-client-extra++>=0.2.7")
 pkg_check_modules(EGL REQUIRED egl)
-pkg_check_modules(OPENGL REQUIRED gl)
 pkg_check_modules(XKBCOMMON REQUIRED xkbcommon)
 pkg_check_modules(RAPIDJSON REQUIRED "RapidJSON>=1.1.0")
 
@@ -73,7 +72,6 @@ target_link_libraries(flutter_wayland
   ${XKBCOMMON_LIBRARIES}
   ${RAPIDJSON_LIBRARIES}
   ${EGL_LDFLAGS}
-  ${OPENGL_LDFLAGS}
 )
 
 target_include_directories(flutter_wayland
@@ -85,7 +83,6 @@ target_include_directories(flutter_wayland
   ${WAYLANDPP_EGL_INCLUDE_DIRS}
   ${WAYLANDPP_CLIENT_EXTRA_INCLUDE_DIRS}
   ${RAPIDJSON_INCLUDE_DIRS}
-  ${OPENGL_INCLUDE_DIRS}
 )
 
 target_compile_options(flutter_wayland PUBLIC ${EGL_CFLAGS})
