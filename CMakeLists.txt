@@ -69,9 +69,9 @@ target_link_libraries(flutter_wayland
   ${WAYLANDPP_EGL_LIBRARIES}
   ${WAYLANDPP_CURSOR_LIBRARIES}
   ${WAYLANDPP_CLIENT_EXTRA_LIBRARIES}
+  ${EGL_LDFLAGS}
   ${XKBCOMMON_LIBRARIES}
   ${RAPIDJSON_LIBRARIES}
-  ${EGL_LDFLAGS}
 )
 
 target_include_directories(flutter_wayland
@@ -82,6 +82,8 @@ target_include_directories(flutter_wayland
   ${WAYLANDPP_CURSOR_INCLUDE_DIRS}
   ${WAYLANDPP_EGL_INCLUDE_DIRS}
   ${WAYLANDPP_CLIENT_EXTRA_INCLUDE_DIRS}
+  ${EGL_INCLUDE_DIRS}
+  ${XKBCOMMON_INCLUDE_DIRS}
   ${RAPIDJSON_INCLUDE_DIRS}
 )
 
