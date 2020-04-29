@@ -6,35 +6,40 @@ cmake_minimum_required(VERSION 3.5.2)
 
 project(flutter_wayland)
 
-set(FLUTTER_ENGINE_SHA af51afceb8886cc11e25047523c4e0c7e1f5d408)
+if(NOT FLUTTER_ENGINE_LIBRARY)
+  set(FLUTTER_ENGINE_SHA af51afceb8886cc11e25047523c4e0c7e1f5d408)
 
-set(FLUTTER_EMBEDDER_ARTIFACTS_ZIP ${CMAKE_BINARY_DIR}/flutter_embedder_${FLUTTER_ENGINE_SHA}.zip)
-set(FLUTTER_ARTIFACTS_ZIP          ${CMAKE_BINARY_DIR}/flutter_artifact_${FLUTTER_ENGINE_SHA}.zip)
-set(FLUTTER_BUCKET_BASE "https://storage.googleapis.com/flutter_infra/flutter")
+  set(FLUTTER_EMBEDDER_ARTIFACTS_ZIP ${CMAKE_BINARY_DIR}/flutter_embedder_${FLUTTER_ENGINE_SHA}.zip)
+  set(FLUTTER_ARTIFACTS_ZIP          ${CMAKE_BINARY_DIR}/flutter_artifact_${FLUTTER_ENGINE_SHA}.zip)
+  set(FLUTTER_BUCKET_BASE "https://storage.googleapis.com/flutter_infra/flutter")
 
-# Download and setup the Flutter Engine.
-if(NOT EXISTS ${FLUTTER_EMBEDDER_ARTIFACTS_ZIP})
-  file(DOWNLOAD
-    ${FLUTTER_BUCKET_BASE}/${FLUTTER_ENGINE_SHA}/linux-x64/linux-x64-embedder
-    ${FLUTTER_EMBEDDER_ARTIFACTS_ZIP}
-    SHOW_PROGRESS
-  )
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${FLUTTER_EMBEDDER_ARTIFACTS_ZIP}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  )
-endif()
+  # Download and setup the Flutter Engine.
+  if(NOT EXISTS ${FLUTTER_EMBEDDER_ARTIFACTS_ZIP})
+    file(DOWNLOAD
+      ${FLUTTER_BUCKET_BASE}/${FLUTTER_ENGINE_SHA}/linux-x64/linux-x64-embedder
+      ${FLUTTER_EMBEDDER_ARTIFACTS_ZIP}
+      SHOW_PROGRESS
+    )
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${FLUTTER_EMBEDDER_ARTIFACTS_ZIP}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+  endif()
 
-if(NOT EXISTS ${FLUTTER_ARTIFACTS_ZIP})
-  file(DOWNLOAD
-    ${FLUTTER_BUCKET_BASE}/${FLUTTER_ENGINE_SHA}/linux-x64/artifacts.zip
-    ${FLUTTER_ARTIFACTS_ZIP}
-    SHOW_PROGRESS
-  )
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${FLUTTER_ARTIFACTS_ZIP}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  )
+  if(NOT EXISTS ${FLUTTER_ARTIFACTS_ZIP})
+    file(DOWNLOAD
+      ${FLUTTER_BUCKET_BASE}/${FLUTTER_ENGINE_SHA}/linux-x64/artifacts.zip
+      ${FLUTTER_ARTIFACTS_ZIP}
+      SHOW_PROGRESS
+    )
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${FLUTTER_ARTIFACTS_ZIP}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+  endif()
+  set(FLUTTER_ENGINE_LIBRARY ${CMAKE_BINARY_DIR}/libflutter_engine.so)
+else()
+  MESSAGE(STATUS "Using ${FLUTTER_ENGINE_LIBRARY}")
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
@@ -64,7 +69,7 @@ link_directories(${CMAKE_BINARY_DIR})
 add_executable(flutter_wayland ${FLUTTER_WAYLAND_SRC})
 
 target_link_libraries(flutter_wayland
-  flutter_engine
+  ${FLUTTER_ENGINE_LIBRARY}
   ${WAYLANDPP_CLIENT_LIBRARIES}
   ${WAYLANDPP_EGL_LIBRARIES}
   ${WAYLANDPP_CURSOR_LIBRARIES}
