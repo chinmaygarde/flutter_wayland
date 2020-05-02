@@ -68,7 +68,7 @@ link_directories(${CMAKE_BINARY_DIR})
 
 add_executable(flutter_wayland ${FLUTTER_WAYLAND_SRC})
 
-target_link_libraries(flutter_wayland
+target_link_libraries(flutter_wayland dl
   ${FLUTTER_ENGINE_LIBRARY}
   ${WAYLANDPP_CLIENT_LIBRARIES}
   ${WAYLANDPP_EGL_LIBRARIES}

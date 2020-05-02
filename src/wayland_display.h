@@ -31,14 +31,13 @@ class WaylandDisplay {
  public:
   WaylandDisplay(size_t width,
                  size_t height,
-                 std::string bundle_path,
                  const std::vector<std::string>& args);
 
   virtual ~WaylandDisplay() noexcept(false);
 
   bool IsValid() const;
 
-  void InitializeApplication(std::string bundle_path,
+  void InitializeApplication(std::string assets_path,
                              const std::vector<std::string>& args);
 
   bool SetWindowSize(size_t width, size_t height);
@@ -84,6 +83,8 @@ class WaylandDisplay {
 
   FlutterEngine engine_ = nullptr;
   PlatformChannel platform_channel_;
+  void* aot_handle = nullptr;
+  bool load_aot = false;
   int last_button_ = 0;
 
   void init_egl();
@@ -111,6 +112,8 @@ class WaylandDisplay {
       TaskRunner;
 
   void PostTaskCallback(FlutterTask task, uint64_t target_time);
+
+  bool InitializeAot(std::string& assets_path, FlutterProjectArgs& args);
 
 
   FLWAY_DISALLOW_COPY_AND_ASSIGN(WaylandDisplay);
