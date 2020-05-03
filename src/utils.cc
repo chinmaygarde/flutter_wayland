@@ -1,3 +1,4 @@
+// Copyright 2020 Joel Winarske. All rights reserved.
 // Copyright 2018 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -5,7 +6,6 @@
 #include "utils.h"
 
 #include <unistd.h>
-
 #include <sstream>
 
 namespace flutter {
@@ -42,19 +42,38 @@ std::string GetExecutableDirectory() {
   return path_string.substr(0, found + 1);
 }
 
+std::string GetAotFilepath(const std::string& path) {
+  return path + std::string{"/"} + std::string{kAotFileName};
+}
+
 bool FileExistsAtPath(const std::string& path) {
   return ::access(path.c_str(), R_OK) == 0;
 }
 
-bool FlutterAssetBundleIsValid(const std::string& bundle_path) {
-  if (!FileExistsAtPath(bundle_path)) {
-    FLWAY_ERROR << "Bundle directory does not exist." << std::endl;
+bool FlutterAotPresent(const std::string& path) {
+  if (!FileExistsAtPath(path)) {
+    FLWAY_ERROR << "Asset directory does not exist." << std::endl;
     return false;
   }
 
-  if (!FileExistsAtPath(bundle_path + std::string{"/kernel_blob.bin"})) {
-    FLWAY_ERROR << "Kernel blob does not exist." << std::endl;
+  if (!FileExistsAtPath(path + std::string{"/"} + std::string{kAotFileName})) {
     return false;
+  }
+
+  return true;
+}
+
+bool FlutterAssetsPathIsValid(const std::string& path) {
+  if (!FileExistsAtPath(path)) {
+    FLWAY_ERROR << "Asset directory does not exist." << std::endl;
+    return false;
+  }
+
+  if (!FileExistsAtPath(path + std::string{"/"} + std::string{kAotFileName})) {
+    if (!FileExistsAtPath(path + std::string{"/"} + std::string{kKernelBlobFileName})) {
+      FLWAY_ERROR << "Kernel blob does not exist." << std::endl;
+      return false;
+    }
   }
 
   return true;
