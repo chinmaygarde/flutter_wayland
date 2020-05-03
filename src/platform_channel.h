@@ -1,10 +1,10 @@
 #pragma once
 
-#include <flutter_embedder.h>
 #include <flutter/standard_method_codec.h>
+#include <flutter_embedder.h>
 
-#include <map>
 #include <functional>
+#include <map>
 
 namespace flutter {
 
@@ -22,7 +22,8 @@ class PlatformChannel {
   void OnAccessibilityChannelPlatformMessage(const FlutterPlatformMessage*);
   void OnFlutterPlatformChannelPlatformMessage(const FlutterPlatformMessage*);
   void OnFlutterTextInputChannelPlatformMessage(const FlutterPlatformMessage*);
-  void OnFlutterPlatformViewsChannelPlatformMessage(const FlutterPlatformMessage*);
+  void OnFlutterPlatformViewsChannelPlatformMessage(
+      const FlutterPlatformMessage*);
 
   void OnFlutterPluginIoUrlLauncher(const FlutterPlatformMessage*);
   void OnFlutterPluginConnectivity(const FlutterPlatformMessage*);
@@ -31,4 +32,4 @@ class PlatformChannel {
   void OnFlutterPluginIoVideoPlayerEvents(const FlutterPlatformMessage*);
 };
 
-}
+}  // namespace flutter

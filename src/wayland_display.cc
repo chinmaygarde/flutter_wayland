@@ -5,21 +5,21 @@
 
 #include "wayland_display.h"
 
+#include <dlfcn.h>
 #include <linux/input-event-codes.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <chrono>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
-#include <dlfcn.h>
 
 #include "constants.h"
 #include "utils.h"
 
 namespace flutter {
-
 
 static std::string GetICUDataPath() {
   auto exe_dir = GetExecutableDirectory();
@@ -42,7 +42,6 @@ static std::string GetICUDataPath() {
 void WaylandDisplay::InitializeApplication(
     std::string assets_path,
     const std::vector<std::string>& command_line_args) {
-  
   FlutterRendererConfig config = {};
   config.type = kOpenGL;
   config.open_gl.struct_size = sizeof(config.open_gl);
@@ -100,7 +99,7 @@ void WaylandDisplay::InitializeApplication(
   load_aot = FlutterAotPresent(assets_path);
   std::cout << "assets_path: " << assets_path << std::endl;
   std::cout << "load_aot: " << load_aot << std::endl;
-  if(load_aot && !InitializeAot(assets_path, args)) {
+  if (load_aot && !InitializeAot(assets_path, args)) {
     FLWAY_ERROR << "Could not load AOT image" << std::endl;
     valid_ = false;
     return;
@@ -110,8 +109,8 @@ void WaylandDisplay::InitializeApplication(
   args.command_line_argv = command_line_args_c.data();
   args.platform_message_callback = [](const FlutterPlatformMessage* message,
                                       void* context) {
-    reinterpret_cast<WaylandDisplay*>(context)->platform_channel_.PlatformMessageCallback(
-        message);
+    reinterpret_cast<WaylandDisplay*>(context)
+        ->platform_channel_.PlatformMessageCallback(message);
   };
 
   // Configure task runner interop
@@ -141,7 +140,6 @@ void WaylandDisplay::InitializeApplication(
     return;
   }
   platform_channel_.SetEngine(engine_);
-
 
   result = FlutterEngineRunInitialized(engine_);
   if (result != kSuccess) {
@@ -374,7 +372,7 @@ WaylandDisplay::~WaylandDisplay() noexcept(false) {
     if (result != kSuccess) {
       FLWAY_ERROR << "Could not shutdown the Flutter engine." << std::endl;
     }
-    if(aot_handle) {
+    if (aot_handle) {
       dlclose(aot_handle);
     }
   }
@@ -526,64 +524,72 @@ void WaylandDisplay::PostTaskCallback(FlutterTask task, uint64_t target_time) {
   TaskRunner.push(std::make_pair(target_time, task));
 }
 
-bool WaylandDisplay::InitializeAot(std::string& assets_path, FlutterProjectArgs& args) {
+bool WaylandDisplay::InitializeAot(std::string& assets_path,
+                                   FlutterProjectArgs& args) {
+  auto file = GetAotFilepath(assets_path);
 
-    auto file = GetAotFilepath(assets_path);
+  std::cout << "Opening " << file << "..." << std::endl;
+  aot_handle = dlopen(file.c_str(), RTLD_LAZY);
 
-    std::cout << "Opening " << file << "..." << std::endl;
-    aot_handle = dlopen(file.c_str(), RTLD_LAZY);
+  if (!aot_handle) {
+    std::cerr << "Cannot open " << dlerror() << std::endl;
+    return false;
+  }
 
-    if (!aot_handle) {
-        std::cerr << "Cannot open " << dlerror() << std::endl;
-        return false;
-    }
+  dlerror();
+  uint8_t* DartVmSnapshotInst =
+      (uint8_t*)dlsym(aot_handle, kDartVmSnapshotInstructions);
+  char* dlsym_error = dlerror();
+  if (dlsym_error) {
+    std::cerr << "Cannot load symbol '" << kDartVmSnapshotInstructions
+              << "': " << dlsym_error << std::endl;
+    dlclose(aot_handle);
+    aot_handle = nullptr;
+    return false;
+  }
 
-    dlerror();
-    uint8_t* DartVmSnapshotInst = (uint8_t*) dlsym(aot_handle, kDartVmSnapshotInstructions);
-    char *dlsym_error = dlerror();
-    if (dlsym_error) {
-        std::cerr << "Cannot load symbol '" << kDartVmSnapshotInstructions << "': " << dlsym_error << std::endl;
-        dlclose(aot_handle);
-        aot_handle = nullptr;
-        return false;
-    }
+  dlerror();
+  uint8_t* DartIsolateSnapshotInst =
+      (uint8_t*)dlsym(aot_handle, kDartIsolateSnapshotInstructions);
+  dlsym_error = dlerror();
+  if (dlsym_error) {
+    std::cerr << "Cannot load symbol '" << kDartIsolateSnapshotInstructions
+              << "': " << dlsym_error << std::endl;
+    dlclose(aot_handle);
+    aot_handle = nullptr;
+    return false;
+  }
 
-    dlerror();
-    uint8_t* DartIsolateSnapshotInst = (uint8_t*) dlsym(aot_handle, kDartIsolateSnapshotInstructions);
-    dlsym_error = dlerror();
-    if (dlsym_error) {
-        std::cerr << "Cannot load symbol '" << kDartIsolateSnapshotInstructions << "': " << dlsym_error << std::endl;
-        dlclose(aot_handle);
-        aot_handle = nullptr;
-        return false;
-    }
+  dlerror();
+  uint8_t* DartVmSnapshotData =
+      (uint8_t*)dlsym(aot_handle, kDartVmSnapshotData);
+  dlsym_error = dlerror();
+  if (dlsym_error) {
+    std::cerr << "Cannot load symbol '" << kDartVmSnapshotData
+              << "': " << dlsym_error << std::endl;
+    dlclose(aot_handle);
+    aot_handle = nullptr;
+    return false;
+  }
 
-    dlerror();
-    uint8_t* DartVmSnapshotData = (uint8_t*) dlsym(aot_handle, kDartVmSnapshotData);
-    dlsym_error = dlerror();
-    if (dlsym_error) {
-        std::cerr << "Cannot load symbol '" << kDartVmSnapshotData << "': " << dlsym_error << std::endl;
-        dlclose(aot_handle);
-        aot_handle = nullptr;
-        return false;
-    }
+  dlerror();
+  uint8_t* DartIsolateSnapshotData =
+      (uint8_t*)dlsym(aot_handle, kDartIsolateSnapshotData);
+  dlsym_error = dlerror();
+  if (dlsym_error) {
+    std::cerr << "Cannot load symbol '" << kDartIsolateSnapshotData
+              << "': " << dlsym_error << std::endl;
+    dlclose(aot_handle);
+    aot_handle = nullptr;
+    return false;
+  }
 
-    dlerror();
-    uint8_t* DartIsolateSnapshotData = (uint8_t*) dlsym(aot_handle, kDartIsolateSnapshotData);
-    dlsym_error = dlerror();
-    if (dlsym_error) {
-        std::cerr << "Cannot load symbol '" << kDartIsolateSnapshotData << "': " << dlsym_error << std::endl;
-        dlclose(aot_handle);
-        aot_handle = nullptr;
-        return false;
-    }
+  args.vm_snapshot_data = DartVmSnapshotData;
+  args.vm_snapshot_instructions = DartVmSnapshotInst;
+  args.isolate_snapshot_instructions = DartIsolateSnapshotInst;
+  args.isolate_snapshot_data = DartIsolateSnapshotData;
 
-    args.vm_snapshot_data = DartVmSnapshotData;
-    args.vm_snapshot_instructions = DartVmSnapshotInst;
-    args.isolate_snapshot_instructions = DartIsolateSnapshotInst;
-    args.isolate_snapshot_data = DartIsolateSnapshotData;
-
-    return true;
+  return true;
 }
 
 }  // namespace flutter

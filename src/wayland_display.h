@@ -19,8 +19,8 @@
 #include <wayland-client.hpp>
 #include <wayland-egl.hpp>
 
-#include "macros.h"
 #include "keyboard.h"
+#include "macros.h"
 #include "platform_channel.h"
 
 using namespace wayland;
@@ -60,7 +60,7 @@ class WaylandDisplay {
   xdg_surface_t xdg_surface;
   xdg_toplevel_t xdg_toplevel;
   pointer_t pointer;
-  Keyboard *keyboard;
+  Keyboard* keyboard;
   touch_t touch;
 
   // EGL
@@ -114,7 +114,6 @@ class WaylandDisplay {
   void PostTaskCallback(FlutterTask task, uint64_t target_time);
 
   bool InitializeAot(std::string& assets_path, FlutterProjectArgs& args);
-
 
   FLWAY_DISALLOW_COPY_AND_ASSIGN(WaylandDisplay);
 };  // namespace flutter

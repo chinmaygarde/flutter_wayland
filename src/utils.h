@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "macros.h"
 #include "constants.h"
+#include "macros.h"
 
 namespace flutter {
 

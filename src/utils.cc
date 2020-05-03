@@ -6,6 +6,7 @@
 #include "utils.h"
 
 #include <unistd.h>
+
 #include <sstream>
 
 namespace flutter {
@@ -70,7 +71,8 @@ bool FlutterAssetsPathIsValid(const std::string& path) {
   }
 
   if (!FileExistsAtPath(path + std::string{"/"} + std::string{kAotFileName})) {
-    if (!FileExistsAtPath(path + std::string{"/"} + std::string{kKernelBlobFileName})) {
+    if (!FileExistsAtPath(path + std::string{"/"} +
+                          std::string{kKernelBlobFileName})) {
       FLWAY_ERROR << "Kernel blob does not exist." << std::endl;
       return false;
     }

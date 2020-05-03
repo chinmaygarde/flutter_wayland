@@ -6,6 +6,7 @@
 #define FLUTTER_SHELL_PLATFORM_COMMON_CPP_CLIENT_WRAPPER_INCLUDE_FLUTTER_ENCODABLE_VALUE_H_
 
 #include <assert.h>
+
 #include <cstdint>
 #include <map>
 #include <string>

@@ -13,7 +13,8 @@ constexpr char kKernelBlobFileName[] = "kernel_blob.bin";
 
 // Symbols
 constexpr char kDartVmSnapshotInstructions[] = "_kDartVmSnapshotInstructions";
-constexpr char kDartIsolateSnapshotInstructions[] = "_kDartIsolateSnapshotInstructions";
+constexpr char kDartIsolateSnapshotInstructions[] =
+    "_kDartIsolateSnapshotInstructions";
 constexpr char kDartVmSnapshotData[] = "_kDartVmSnapshotData";
 constexpr char kDartIsolateSnapshotData[] = "_kDartIsolateSnapshotData";
 

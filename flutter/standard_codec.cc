@@ -7,16 +7,17 @@
 // together to simplify use of the client wrapper, since the common case is
 // that any client that needs one of these files needs all three.
 
-#include "flutter/standard_message_codec.h"
-#include "flutter/standard_method_codec.h"
-#include "standard_codec_serializer.h"
-
 #include <assert.h>
+
 #include <cstring>
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
+
+#include "flutter/standard_message_codec.h"
+#include "flutter/standard_method_codec.h"
+#include "standard_codec_serializer.h"
 
 namespace flutter {
 
