@@ -11,7 +11,7 @@ if(NOT FLUTTER_ENGINE_LIBRARY AND NOT CMAKE_CROSSCOMPILING)
   if(NOT FLUTTER_ENGINE_SHA)
 
     if(NOT CHANNEL)
-        set(CHANNEL "stable" CACHE STRING "Choose the channel, options are: master, dev, beta, stable" FORCE)
+        set(CHANNEL "beta" CACHE STRING "Choose the channel, options are: master, dev, beta, stable" FORCE)
         message(STATUS "Flutter Channel not set, defaulting to stable")
     endif()
 
@@ -66,14 +66,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 
 include(FindPkgConfig)
-pkg_check_modules(WAYLANDPP_CLIENT REQUIRED "wayland-client++>=0.2.7")
-pkg_check_modules(WAYLANDPP_CURSOR REQUIRED "wayland-cursor++>=0.2.7")
-pkg_check_modules(WAYLANDPP_EGL REQUIRED "wayland-egl++>=0.2.7")
-pkg_check_modules(WAYLANDPP_CLIENT_EXTRA REQUIRED "wayland-client-extra++>=0.2.7")
+pkg_check_modules(WAYLANDPP REQUIRED 
+    wayland-client-extra++>=0.2.7
+    wayland-client++>=0.2.7
+    wayland-client-unstable++>=0.2.7
+    wayland-cursor++>=0.2.7
+    wayland-egl++>=0.2.7
+    wayland-client++>=0.2.7
+    )
+
 pkg_check_modules(EGL REQUIRED egl)
 pkg_check_modules(XKBCOMMON REQUIRED xkbcommon)
 pkg_check_modules(RAPIDJSON REQUIRED "RapidJSON>=1.1.0")
-
 
 
 set(FLUTTER_WAYLAND_SRC
@@ -91,23 +95,17 @@ add_executable(flutter_wayland ${FLUTTER_WAYLAND_SRC})
 
 target_link_libraries(flutter_wayland dl
   ${FLUTTER_ENGINE_LIBRARY}
-  ${WAYLANDPP_CLIENT_LIBRARIES}
-  ${WAYLANDPP_EGL_LIBRARIES}
-  ${WAYLANDPP_CURSOR_LIBRARIES}
-  ${WAYLANDPP_CLIENT_EXTRA_LIBRARIES}
+  ${WAYLANDPP_LINK_LIBRARIES}
   ${EGL_LDFLAGS}
   ${XKBCOMMON_LIBRARIES}
   ${RAPIDJSON_LIBRARIES}
 )
-
+link_directories()
 target_include_directories(flutter_wayland
   PRIVATE
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_BINARY_DIR}
-  ${WAYLANDPP_CLIENT_INCLUDE_DIRS}
-  ${WAYLANDPP_CURSOR_INCLUDE_DIRS}
-  ${WAYLANDPP_EGL_INCLUDE_DIRS}
-  ${WAYLANDPP_CLIENT_EXTRA_INCLUDE_DIRS}
+  ${WAYLANDPP_INCLUDE_DIRS}
   ${EGL_INCLUDE_DIRS}
   ${XKBCOMMON_INCLUDE_DIRS}
   ${RAPIDJSON_INCLUDE_DIRS}
