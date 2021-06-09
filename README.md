@@ -2,7 +2,7 @@
 
 A Flutter Embedder that talks to Wayland
 
-![Running in Weston](assets/ubuntu_wayland_18.0.4.png)
+![Running in Weston](assets/fedora_34.png)
 
 #### Build Setup Instructions
 
@@ -54,7 +54,7 @@ flutter_flags: Typically empty. These extra flags are passed directly to the
 ```
 
 #### Building Gallery Application
-
+```
 cd ~/development
 export PATH=`pwd`/flutter/bin:$PATH
 flutter doctor -v
@@ -63,13 +63,13 @@ cd gallery
 flutter channel dev
 flutter upgrade
 flutter build bundle
-
+```
 #### Running Gallery Application
-
+```
 cd flutter_wayland/build
 cp ~/development/flutter/bin/cache/artifacts/engine/linux-x64/icudtl.dat .
 ./flutter_wayland /home/joel/development/gallery/build/flutter_assets
-
+```
 Note: the flutter engine and gallery channel must match, or you will see something like this:
 
 ```
@@ -88,5 +88,6 @@ Pointer Present
 Keyboard Present
 assets_path: /home/joel/development/gallery/build/flutter_assets
 load_aot: 0
-flutter: Observatory listening on http://127.0.0.1:43899/lEHJahgQkM4=/
+flutter: Observatory listening on http://127.0.0.1:36061/E9T-fNgSjiU=/
+LOG: /mnt/raid10/flutter_wayland/src/platform_channel.cc:108: PlatformChannel: SystemChrome.setApplicationSwitcherDescription
 ```
