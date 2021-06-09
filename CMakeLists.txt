@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.5.2)
 
 project(flutter_wayland)
 
-if(NOT FLUTTER_ENGINE_LIBRARY)
+if(NOT FLUTTER_ENGINE_LIBRARY AND NOT CMAKE_CROSSCOMPILING)
 
   if(NOT FLUTTER_ENGINE_SHA)
 
@@ -62,6 +62,8 @@ else()
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_EXTENSIONS FALSE)
 
 include(FindPkgConfig)
 pkg_check_modules(WAYLANDPP_CLIENT REQUIRED "wayland-client++>=0.2.7")
