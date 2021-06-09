@@ -15,8 +15,6 @@ CXX=/usr/bin/clang++ CC=/usr/bin/clang cmake ..
 make -j VERBOSE=1
 ```
 
-* Run the embedder using `./flutter_wayland`. 
-
 #### Enable Wayland on Ubuntu 16/18
 
 * log out
@@ -53,4 +51,42 @@ flutter_flags: Typically empty. These extra flags are passed directly to the
                Flutter engine. To see all supported flags, run
                `flutter_tester --help` using the test binary included in the
                Flutter tools.
+```
+
+#### Building Gallery Application
+
+cd ~/development
+export PATH=`pwd`/flutter/bin:$PATH
+flutter doctor -v
+git clone https://github.com/flutter/gallery.git
+cd gallery
+flutter channel dev
+flutter upgrade
+flutter build bundle
+
+#### Running Gallery Application
+
+cd flutter_wayland/build
+cp ~/development/flutter/bin/cache/artifacts/engine/linux-x64/icudtl.dat .
+./flutter_wayland /home/joel/development/gallery/build/flutter_assets
+
+Note: the flutter engine and gallery channel must match, or you will see something like this:
+
+```
+[ERROR:flutter/shell/common/shell.cc(103)] Dart Error: Can't load Kernel binary: Invalid SDK hash.
+[ERROR:flutter/runtime/dart_isolate.cc(171)] Could not prepare isolate.
+[ERROR:flutter/runtime/runtime_controller.cc(415)] Could not create root isolate.
+[ERROR:flutter/shell/common/shell.cc(588)] Could not launch engine with configuration.
+```
+
+A run without errors might look like this:
+
+```
+$ ./flutter_wayland /home/joel/development/gallery/build/flutter_assets
+LOG: /mnt/raid10/flutter_wayland/src/main.cc:65: Arg: /home/joel/development/gallery/build/flutter_assets
+Pointer Present
+Keyboard Present
+assets_path: /home/joel/development/gallery/build/flutter_assets
+load_aot: 0
+flutter: Observatory listening on http://127.0.0.1:43899/lEHJahgQkM4=/
 ```

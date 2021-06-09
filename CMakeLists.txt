@@ -11,8 +11,8 @@ if(NOT FLUTTER_ENGINE_LIBRARY AND NOT CMAKE_CROSSCOMPILING)
   if(NOT FLUTTER_ENGINE_SHA)
 
     if(NOT CHANNEL)
-        set(CHANNEL "beta" CACHE STRING "Choose the channel, options are: master, dev, beta, stable" FORCE)
-        message(STATUS "Flutter Channel not set, defaulting to stable")
+        set(CHANNEL "dev" CACHE STRING "Choose the channel, options are: master, dev, beta, stable" FORCE)
+        message(STATUS "Flutter Channel not set, defaulting to dev")
     endif()
 
     message(STATUS "Flutter Channel ........ ${CHANNEL}")
@@ -95,10 +95,10 @@ add_executable(flutter_wayland ${FLUTTER_WAYLAND_SRC})
 
 target_link_libraries(flutter_wayland dl
   ${FLUTTER_ENGINE_LIBRARY}
+  ${XKBCOMMON_LINK_LIBRARIES}
+  ${RAPIDJSON_LINK_LIBRARIES}
   ${WAYLANDPP_LINK_LIBRARIES}
   ${EGL_LDFLAGS}
-  ${XKBCOMMON_LIBRARIES}
-  ${RAPIDJSON_LIBRARIES}
 )
 link_directories()
 target_include_directories(flutter_wayland

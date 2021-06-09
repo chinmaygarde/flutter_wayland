@@ -400,16 +400,13 @@ void WaylandDisplay::init_egl() {
   if (!((major == 1 && minor >= 4) || major >= 2))
     throw std::runtime_error("EGL version too old");
 
-  std::array<EGLint, 17> config_attribs = {{
+  std::array<EGLint, 11> config_attribs = {{
       // clang-format off
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
         EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
         EGL_RED_SIZE,        8,
         EGL_GREEN_SIZE,      8,
         EGL_BLUE_SIZE,       8,
-        EGL_ALPHA_SIZE,      8,
-        EGL_DEPTH_SIZE,      0,
-        EGL_STENCIL_SIZE,    0,
         EGL_NONE,            // termination sentinel
       // clang-format on
   }};
@@ -426,7 +423,7 @@ void WaylandDisplay::init_egl() {
     throw std::runtime_error("eglCreateWindowSurface");
 
   std::array<EGLint, 3> context_attribs = {
-      {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE}};
+      {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE}};
 
   eglcontext = eglCreateContext(egldisplay, config, EGL_NO_CONTEXT,
                                 context_attribs.data());
