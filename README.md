@@ -6,8 +6,8 @@ A Flutter Embedder that talks to Wayland
 
 #### Build Setup Instructions
 
-* Ubuntu 18/20 deps: `sudo apt-get install cmake ninja lib-wayland++ libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev rapidjson-dev`
-* Fedora 33/34 deps: `sudo dnf install pugixml waylandpp wayland-devel libxkbcommon-devel rapidjson-devel clang`
+* Ubuntu 18/20 deps: `sudo apt-get install cmake lib-wayland++ libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev rapidjson-dev clang`
+* Fedora 33/34 deps: `sudo dnf install wayland-devel libxkbcommon-devel rapidjson-devel pugixml-devel waylandpp-devel clang`
 
 ```
 mkdir build && cd build
