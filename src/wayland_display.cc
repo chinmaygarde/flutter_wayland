@@ -191,11 +191,13 @@ WaylandDisplay::WaylandDisplay(size_t width,
   };
   display.roundtrip();
 
-  seat.on_capabilities() = [&](seat_capability capability) {
-    has_keyboard = capability & seat_capability::keyboard;
-    has_pointer = capability & seat_capability::pointer;
-    has_touch = capability & seat_capability::touch;
-  };
+  if (seat) {
+    seat.on_capabilities() = [&](seat_capability capability) {
+      has_keyboard = capability & seat_capability::keyboard;
+      has_pointer = capability & seat_capability::pointer;
+      has_touch = capability & seat_capability::touch;
+    };
+  }
 
   // create a surface
   surface = compositor.create_surface();
