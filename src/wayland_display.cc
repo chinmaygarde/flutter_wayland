@@ -391,7 +391,7 @@ WaylandDisplay::~WaylandDisplay() noexcept(false) {
 }
 
 void WaylandDisplay::init_egl() {
-  if (eglBindAPI(EGL_OPENGL_API) == EGL_FALSE)
+  if (eglBindAPI(EGL_OPENGL_ES_API) == EGL_FALSE)
     throw std::runtime_error("eglBindAPI");
 
   egldisplay = eglGetDisplay(display);
