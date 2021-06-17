@@ -166,7 +166,9 @@ bool WaylandDisplay::SetWindowSize(size_t width, size_t height) {
 WaylandDisplay::WaylandDisplay(size_t width,
                                size_t height,
                                const std::vector<std::string>& args)
-    : screen_width_(width), screen_height_(height) {
+    : screen_width_(width), screen_height_(height),
+      has_keyboard(false), has_pointer(false), has_touch(false)
+ {
   if (screen_width_ == 0 || screen_height_ == 0) {
     FLWAY_ERROR << "Invalid screen dimensions." << std::endl;
     return;
