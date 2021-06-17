@@ -166,7 +166,9 @@ bool WaylandDisplay::SetWindowSize(size_t width, size_t height) {
 WaylandDisplay::WaylandDisplay(size_t width,
                                size_t height,
                                const std::vector<std::string>& args)
-    : screen_width_(width), screen_height_(height) {
+    : screen_width_(width), screen_height_(height),
+      has_keyboard(false), has_pointer(false), has_touch(false)
+ {
   if (screen_width_ == 0 || screen_height_ == 0) {
     FLWAY_ERROR << "Invalid screen dimensions." << std::endl;
     return;
@@ -189,11 +191,13 @@ WaylandDisplay::WaylandDisplay(size_t width,
   };
   display.roundtrip();
 
-  seat.on_capabilities() = [&](seat_capability capability) {
-    has_keyboard = capability & seat_capability::keyboard;
-    has_pointer = capability & seat_capability::pointer;
-    has_touch = capability & seat_capability::touch;
-  };
+  if (seat) {
+    seat.on_capabilities() = [&](seat_capability capability) {
+      has_keyboard = capability & seat_capability::keyboard;
+      has_pointer = capability & seat_capability::pointer;
+      has_touch = capability & seat_capability::touch;
+    };
+  }
 
   // create a surface
   surface = compositor.create_surface();
@@ -387,7 +391,7 @@ WaylandDisplay::~WaylandDisplay() noexcept(false) {
 }
 
 void WaylandDisplay::init_egl() {
-  if (eglBindAPI(EGL_OPENGL_API) == EGL_FALSE)
+  if (eglBindAPI(EGL_OPENGL_ES_API) == EGL_FALSE)
     throw std::runtime_error("eglBindAPI");
 
   egldisplay = eglGetDisplay(display);
