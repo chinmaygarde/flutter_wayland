@@ -1,73 +1,121 @@
+// Copyright 2020 Joel Winarske. All rights reserved.
 // Copyright 2018 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 #pragma once
 
-#include <EGL/egl.h>
-#include <wayland-client.h>
-#include <wayland-egl.h>
+#include <GLES2/gl2.h>
+#include <flutter_embedder.h>
+#include <linux/input.h>
 
-#include <memory>
-#include <string>
+#include <array>
+#include <functional>
+#include <iostream>
+#include <queue>
+#include <stdexcept>
+#include <vector>
+#include <wayland-client-protocol-extra.hpp>
+#include <wayland-client.hpp>
+#include <wayland-egl.hpp>
 
-#include "flutter_application.h"
+#include "keyboard.h"
 #include "macros.h"
+#include "platform_channel.h"
+
+using namespace wayland;
 
 namespace flutter {
 
-class WaylandDisplay : public FlutterApplication::RenderDelegate {
+class WaylandDisplay {
  public:
-  WaylandDisplay(size_t width, size_t height);
+  WaylandDisplay(size_t width,
+                 size_t height,
+                 const std::vector<std::string>& args);
 
-  ~WaylandDisplay();
+  virtual ~WaylandDisplay() noexcept(false);
 
   bool IsValid() const;
+
+  void InitializeApplication(std::string assets_path,
+                             const std::vector<std::string>& args);
+
+  bool SetWindowSize(size_t width, size_t height);
 
   bool Run();
 
  private:
-  static const wl_registry_listener kRegistryListener;
-  static const wl_shell_surface_listener kShellSurfaceListener;
+  // global objects
+  display_t display;
+  registry_t registry;
+  compositor_t compositor;
+  shell_t shell;
+  xdg_wm_base_t xdg_wm_base;
+  seat_t seat;
+  shm_t shm;
+
+  // local objects
+  surface_t surface;
+  shell_surface_t shell_surface;
+  xdg_surface_t xdg_surface;
+  xdg_toplevel_t xdg_toplevel;
+  pointer_t pointer;
+  Keyboard* keyboard;
+  touch_t touch;
+
+  // EGL
+  egl_window_t egl_window;
+  EGLDisplay egldisplay;
+  EGLSurface eglsurface;
+  EGLContext eglcontext;
+  EGLContext eglresourcecontext;
+
+  bool running;
+  bool has_pointer;
+  bool has_keyboard;
+  bool has_touch;
+
   bool valid_ = false;
   const int screen_width_;
   const int screen_height_;
-  wl_display* display_ = nullptr;
-  wl_registry* registry_ = nullptr;
-  wl_compositor* compositor_ = nullptr;
-  wl_shell* shell_ = nullptr;
-  wl_shell_surface* shell_surface_ = nullptr;
-  wl_surface* surface_ = nullptr;
-  wl_egl_window* window_ = nullptr;
-  EGLDisplay egl_display_ = EGL_NO_DISPLAY;
-  EGLSurface egl_surface_ = nullptr;
-  EGLContext egl_context_ = EGL_NO_CONTEXT;
+  int32_t cur_x;
+  int32_t cur_y;
 
-  bool SetupEGL();
+  FlutterEngine engine_ = nullptr;
+  PlatformChannel platform_channel_;
+  void* aot_handle = nullptr;
+  bool load_aot = false;
+  int last_button_ = 0;
 
-  void AnnounceRegistryInterface(struct wl_registry* wl_registry,
-                                 uint32_t name,
-                                 const char* interface,
-                                 uint32_t version);
+  void init_egl();
 
-  void UnannounceRegistryInterface(struct wl_registry* wl_registry,
-                                   uint32_t name);
+  bool GLMakeCurrent();
+  bool GLClearCurrent();
+  bool GLPresent();
+  uint32_t GLFboCallback();
+  bool GLMakeResourceCurrent();
+  bool GLExternalTextureFrameCallback(int64_t texture_id,
+                                      size_t width,
+                                      size_t height,
+                                      FlutterOpenGLTexture* texture);
 
-  bool StopRunning();
+  class CompareFlutterTask {
+   public:
+    bool operator()(std::pair<uint64_t, FlutterTask> n1,
+                    std::pair<uint64_t, FlutterTask> n2) {
+      return n1.first > n2.first;
+    }
+  };
+  std::priority_queue<std::pair<uint64_t, FlutterTask>,
+                      std::vector<std::pair<uint64_t, FlutterTask>>,
+                      CompareFlutterTask>
+      TaskRunner;
 
-  // |flutter::FlutterApplication::RenderDelegate|
-  bool OnApplicationContextMakeCurrent() override;
+  void PostTaskCallback(FlutterTask task, uint64_t target_time);
 
-  // |flutter::FlutterApplication::RenderDelegate|
-  bool OnApplicationContextClearCurrent() override;
-
-  // |flutter::FlutterApplication::RenderDelegate|
-  bool OnApplicationPresent() override;
-
-  // |flutter::FlutterApplication::RenderDelegate|
-  uint32_t OnApplicationGetOnscreenFBO() override;
+  bool InitializeAot(std::string& assets_path, FlutterProjectArgs& args);
 
   FLWAY_DISALLOW_COPY_AND_ASSIGN(WaylandDisplay);
-};
+};  // namespace flutter
 
 }  // namespace flutter

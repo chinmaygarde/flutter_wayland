@@ -33,3 +33,5 @@ Icon?
 
 *.sublime-workspace
 cmake-*/
+
+.vscode
