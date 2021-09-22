@@ -2,6 +2,10 @@
 
 A Flutter Embedder that talks to Wayland
 
+** ARCHIVED REPO **
+
+I recommend use of https://github.com/toyota-connected/ivi-homescreen/ which is re-write of this proof of concept app.
+
 ![Running in Weston](assets/fedora_34.png)
 
 #### Build Setup Instructions
