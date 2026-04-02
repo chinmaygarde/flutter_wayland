@@ -289,7 +289,7 @@ bool WaylandDisplay::SetupEGL() {
     egl_surface_ =
         eglCreateWindowSurface(egl_display_, egl_config, window_, attribs);
 
-    if (surface_ == EGL_NO_SURFACE) {
+    if (egl_surface_ == EGL_NO_SURFACE) {
       LogLastEGLError();
       FLWAY_ERROR << "EGL surface was null during surface selection."
                   << std::endl;
